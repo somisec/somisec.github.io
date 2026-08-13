@@ -69,9 +69,10 @@ Host script results:
 |_clock-skew: 6h59m40s
 ```
 
-Its a domain controller. But there is a few things that stand out. First is port 21. FTP is not something you see often on windows machines. This is worth checking out.
+Its a domain controller. But there is a thing that stands out. First is port 21. FTP is not something you see often on windows machines. This is worth checking out.
 
 We can use netexec to generate us the kerberos files and hosts file. This saves us some time and its a nice way to do it. We can also double check the files to see it generated correctly.
+
 ```terminal
 ┌──(songbird㉿kali)-[~/Desktop/Administrator]
 └─$ sudo nxc smb 10.129.43.32 -u '' -p '' --generate-krb5-file /etc/krb5.conf
@@ -326,7 +327,7 @@ krbtgt:502:aad3b435b51404eeaad3b435b51404ee:1181ba47d45fa2c76385a82409cbfaf6:::
 <REDACTED>
 ```
 
-We get the Administrator hash. If we try it it succeeds.
+We get the Administrator hash. If we try it,it succeeds.
 
 ```terminal
 ┌──(songbird㉿kali)-[~/Desktop/Administrator]
