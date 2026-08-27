@@ -12,7 +12,7 @@ media_subpath: /assets/posts/certified
 
 ```terminal
 Me > 10.10.14.74
-Target > 
+Target > 10.129.231.186
 ```
 
 As is common in Windows pentests, you will start the Certified box with credentials for the following account: Username: judith.mader Password: judith09
@@ -176,3 +176,4 @@ We see that we have as users in the Management group have GenericWrite over MANA
 
 At first I tried a kerberoast attack but I could not crack the hash. Instead we are going for a shadow credentials attack 
 
+Im going to finish writing this soon
