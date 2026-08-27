@@ -125,7 +125,7 @@ SMB         10.129.231.186  445    DC01             [+] certified.htb\:
 INFO: Done in 00M 32S
 ```
 
-[Certified](certified1.png)
+![Certified](c1.png)
 
 We see that we have a attack path from judith.mader -> MANAGEMENT_SVC
 
@@ -170,7 +170,7 @@ member: CN=management service,CN=Users,DC=certified,DC=htb; CN=Judith Mader,CN=U
 
 We can confirm we are in the group by the last bloodyad command. IMPORTANT there is a cron job running pretty often that reverts the change so if commands fail go back to the first impacket script and redo it.
 
-[Certified](certified2.png)
+![Certified](c2.png)
 
 We see that we have as users in the Management group have GenericWrite over MANAGEMENT_SVC 
 
