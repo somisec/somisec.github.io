@@ -400,7 +400,7 @@ Certificate Templates
       ESC9                              : Template has no security extension.
     [*] Remarks
       ESC9                              : Other prerequisites may be required for this to be exploitable. See the wiki for more details.
-```terminal
+```
 
 It flags ESC9 as vulnerable.
 
