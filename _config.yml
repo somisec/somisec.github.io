@@ -16,7 +16,7 @@ timezone:
 
 title: somisec # the main title
 
-tagline: Writeups # it will display as the subtitle
+tagline: Writeups, Student, CTFs, Notes # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   Writeups, CTFs, Notes
