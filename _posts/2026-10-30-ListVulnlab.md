@@ -18,7 +18,7 @@ The difficulty changes might be changed around. For example on Vulnlab (build) w
 
 #### Easy
 
-- Baby
+- Baby [somisec](https://somisec.github.io/posts/Baby/ "Baby Writeup")
 - Forgotten
 - Lock
 - Manage
@@ -34,7 +34,7 @@ The difficulty changes might be changed around. For example on Vulnlab (build) w
 - Barrier
 - Bruno
 - Slonik
-- Breach [somisec](https://somisec.github.io/posts/Breach/ "Breach writeup")
+- Breach [somisec](https://somisec.github.io/posts/Breach/ "Breach Writeup")
 - Bamboo
 - Job
 - Watcher
