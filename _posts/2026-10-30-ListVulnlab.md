@@ -23,7 +23,7 @@ The difficulty changes might be changed around. For example on Vulnlab (build) w
 - Lock
 - Manage
 - RetroTwo
-- Reset
+- Reset [somisec](https://somisec.github.io/posts/Reset/ "Reset Writeup")
 - VulnEscape
 - Data [somisec](https://somisec.github.io/posts/Data/ "Data Writeup")
 - Retro [somisec](https://somisec.github.io/posts/Retro/ "Retro Writeup")
