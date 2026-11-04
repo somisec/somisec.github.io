@@ -20,7 +20,7 @@ The difficulty changes might be changed around. For example on Vulnlab (build) w
 
 - Baby [somisec](https://somisec.github.io/posts/Baby/ "Baby Writeup")
 - Forgotten
-- Lock
+- Lock [somisec](https://somisec.github.io/posts/Lock/ "Lock Writeup")
 - Manage
 - RetroTwo
 - Reset [somisec](https://somisec.github.io/posts/Reset/ "Reset Writeup")
