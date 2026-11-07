@@ -404,7 +404,7 @@ Mode                 LastWriteTime         Length Name
 -a----         3/13/2018  10:47 PM         267264 rdp.exe
 ```
 
-I tried alot here but it did not work with anything. It never revealed the password but we keep going. I tried mabey it could not read the files so I changed the directory to downloads instead. (This was not the error)
+I tried alot here but it did not work with anything. It never revealed the password but we keep going. I thought mabey it could not read the files so I changed the directory to downloads instead. (This was not the error)
 
 ```terminal
 PS C:\Users\kioskUser0\Downloads> cp C:\temp1\BulletsPassView.exe C:\Users\kioskUser0\Downloads
@@ -551,6 +551,8 @@ SeTimeZonePrivilege                       Change the time zone                  
 SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Disabled
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Disabled
 ```
+
+## Root
 
 Now that looks like it. Lets get the root flag.
 
