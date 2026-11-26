@@ -38,7 +38,7 @@ The difficulty changes might be changed around. For example on Vulnlab (build) w
 - Bamboo
 - Job
 - Watcher
-- BabyTwo
+- BabyTwo [somisec](https://somisec.github.io/posts/BabyTwo/ "BabyTwo Writeup")
 - Delegate [somisec](https://somisec.github.io/posts/Delegate/ "Delegate Writeup")
 - Media
 - Sendai
